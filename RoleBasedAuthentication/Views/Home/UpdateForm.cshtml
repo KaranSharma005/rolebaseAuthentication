@@ -1,0 +1,27 @@
+﻿@model MyModal
+<form class="form-control" id="update-form">
+    <div class="form-floating mb-3">
+        <label for="name">Your Name : </label>
+        <input type="text" name="name" value="@Model.name" id="name" />
+    </div>
+    <br />
+    <div>
+        <input value="@Model.roll" name="roll" hidden/>
+    </div>
+    <div class="form-floating mb-3">
+        <label for="adress">Adress : </label>
+        <input type="text" name="adress" id="adress" value="@Model.adress"/>
+    </div>
+    <br />
+    <div class="form-floating mb-3">
+        <label for="state">State : </label>
+        <input type="text" name="state" id="state" value="@Model.state"/>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary submit-data" id="updateForm">Update changes</button>
+        </div>
+    </div>
+
+</form>

@@ -1,0 +1,27 @@
+﻿@model List<string>
+<table class="table">
+    @if (Model != null)
+    {
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Class</th>
+            <th>Action</th>
+        </tr>
+        foreach (var student in Model)
+        {
+            <tr>
+                <td>@student</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary btn-sm">Edit</button>
+                        <button type="button" class="btn btn-danger btn-sm">Delete</button>
+                    </div>
+                </td>
+            </tr>
+        }
+    }
+</table>

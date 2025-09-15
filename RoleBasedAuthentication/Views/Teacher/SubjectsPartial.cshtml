@@ -1,0 +1,12 @@
+﻿
+@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model List<SelectListItem>
+<select name="Input.Subject" id="Subject" class="form-control">
+    <option value="">-- Select Subject --</option>
+    @foreach (var subject in Model)
+    {
+        <option value="@subject.Value">@subject.Text</option>
+    }
+</select>

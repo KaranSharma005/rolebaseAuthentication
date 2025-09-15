@@ -1,0 +1,30 @@
+﻿@model List<ClassModal>
+@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@if(Model != null)
+{
+    <ul class="list-group w-75 border">
+    @foreach(var subject in Model)
+    {
+            <li class="list-group-item d-flex justify-content-between align-items-center classList">
+                <span class="fw-bold">@subject.classname</span>
+                @if(subject.description != null)
+                {
+                    <p style="margin:0; word-wrap:break-word; white-space:normal; max-width:70%;">
+                        @subject.description
+                    </p>
+                }
+                else
+                {
+                <p>-</p>
+                }
+                <div>
+                    <button class="btn btn-sm btn-danger deleteclass" data-id="@subject.classId">Delete</button>
+                    <button class="btn btn-sm btn-primary updateclass" data-id="@subject.classId">Update</button>
+                </div>
+            </li>
+    }
+    </ul>
+}

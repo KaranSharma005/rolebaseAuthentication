@@ -1,0 +1,96 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="modal fade" id="classModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add class</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body row" id="modalDiv">
+            </div>
+        </div>
+    </div>
+</div>
+<button class="btn btn-primary" id="addClass">Add class</button>
+<br />
+<br/>
+<div id="list-classes">
+
+</div>
+
+
+
+@section Scripts{
+    <script>
+        function GetUpdatedList(){
+            $.get("/Class/ListClass", function(data){
+                $("#list-classes").html(data);
+            })
+        }
+
+        $(document).ready(function(){
+            GetUpdatedList();
+        })
+
+        $("#addClass").click(function(){
+            $.get("/Class/ClassModalPartial", function(data) {
+                    $("#modalDiv").html(data);
+                    $("#classModal").modal("show");
+            });
+        })
+
+        $("body").on("click", "#submitClass", function(e){
+            e.preventDefault();
+            var data = $("#classform").serialize();
+            if(!data)
+            return;
+            $.post("/Class/AddClass", data, function(data){
+                GetUpdatedList();
+                $("#classModal").modal("hide");
+            })
+        })
+
+        $("body").on("click", ".deleteclass", function(){
+            var id = $(this).data("id");
+
+            bootbox.confirm({
+                size: 'small',
+                message: 'Are you sure?',
+                callback: function (result) {
+                    $.post("/Class/DeleteClass",{id: id}, function(){
+                        GetUpdatedList();
+                    })
+                }
+            });
+
+        })
+
+        $("body").on("click", ".updateclass", function(){
+            var id = $(this).data("id");
+            $.get("/Class/UpdatePartial",{id: id}, function(data){
+                $("#modalDiv").html(data);
+                $("#classModal").modal("show");
+            })
+        })
+
+        $("body").on("click", "#updateClass", function(e){
+            e.preventDefault();
+            var details = $("#updateclassform").serialize();
+            console.log(details);
+            $.post("/Class/Update", details , function(){
+                GetUpdatedList();
+                $("#classModal").modal("hide");
+            })
+        })
+
+        $(".close").click(function(){
+            $("#classModal").modal("hide");
+        })
+    </script>
+}

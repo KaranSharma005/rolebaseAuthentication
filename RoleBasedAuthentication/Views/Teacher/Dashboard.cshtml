@@ -1,0 +1,145 @@
+﻿@{
+    
+}
+<div class="modal fade" id="teacherModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Update Teacher</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body row" id="modalDiv">
+            </div>
+        </div>
+    </div>
+</div>
+<button type="button" id="addTeacherBtn" class="position-absolute top-10 end-0 btn btn-secondary btn-lg">Add Teacher</button>
+
+<div id="filter-div">
+    <div class="row mb-3">
+        <div class="col mb-3 d-flex gap-2">
+            <input type="text" placeholder="Search email here..." class="form-control" id="emailfilter" />
+            <input type="text" placeholder="Search name here..." class="form-control" id="namefilter" />
+
+            @Html.DropDownList(
+            "subjectname",
+                        (List<SelectListItem>)ViewBag.Subjects,
+                        "Select subject",
+                        new { @class = "form-control", required = "required" }
+                        )
+
+            @Html.DropDownList(
+                        "classname",
+                        (List<SelectListItem>)ViewBag.Classes,
+                        "Select class",
+                        new { @class = "form-control", required = "required" }
+                        )
+            <button type="submit" class="btn btn-primary" id="emailbtn">Search</button>
+            <button class="btn btn-danger" id="resetFilter">Reset</button>
+        </div>
+    </div>
+</div>
+
+<div id="teachers-list" style="max-height: 450px; overflow-y: auto; overflow-x: auto;">
+    
+</div>
+<br/>
+
+@section Scripts{
+    <script>
+            function GetUpdatedTable(){
+                var email = $("#emailfilter").val();
+                var name = $("#namefilter").val();
+                var subjectname = $("#subjectname").val();
+                var classname = $("#classname").val();
+                console.log(email, name, subjectname, classname);
+                $.ajax({
+                    type: "GET",
+                    data : {
+                        emailfilter : email,
+                        namefilter : name,
+                        subjectname : subjectname,
+                        classname : classname,
+                    },
+                    url: "/Teacher/List",
+                    dataType: "html",
+                    success: function (data) {
+                        console.log(data);
+                        $("#teachers-list").html(data);
+                        $('#teacher-table').DataTable({
+                            "paging": true,      
+                            "searching": true,   
+                            "ordering": true,    
+                            "pageLength": 10,  
+                        });
+                        
+                    },
+                    error: function (error) {
+                        console.error(error);
+                    }
+                });
+            }
+            $(document).ready(function() {
+                GetUpdatedTable();
+            });
+
+            $(document).on("click", ".disableBtn",function(){
+                var id = $(this).data("user");
+                $.post("/Teacher/ToggleTeacher", {id : id, status : false } , function(data,status){
+                    GetUpdatedTable();
+                })
+            })
+
+            $("body").on("click", ".enableBtn", function(){
+                var id = $(this).data("user");
+                $.post("/Teacher/ToggleTeacher", {id : id, status : true} , function(data,status){
+                    GetUpdatedTable();
+                })
+            })
+
+        
+            $('body').on('click', ".editButton", function(){
+                var id = $(this).data("user");
+                $.get("/Teacher/UpdateDetailsPartial", {
+                    id : id,
+                }, function(data, status){
+                    $("#modalDiv").html(data);
+                    $("#teacherModal").modal("show");
+                })
+            })
+
+
+            $(document).off("click", "#submit-update").on("click", "#submit-update", function(e){
+                e.preventDefault();
+                var result = $("#subject-form").serialize();
+                $.post("/Teacher/UpdateTeacher",result,
+                function(data){
+                    $("#teacherModal").modal("hide");
+                    GetUpdatedTable();
+                })
+            })
+
+            $(".close").click(function(){
+                $("#teacherModal").modal("hide");
+            })
+
+            $("#addTeacherBtn").click(function(){
+                window.location.href = "/Identity/Account/Register";
+            })
+
+            $("body").on("click", "#emailbtn", function(){
+                // e.preventDefault();
+                GetUpdatedTable();
+            })
+
+            $("body").on("click", "#resetFilter", function(){
+                $("#emailfilter").val('');
+                $("#namefilter").val('');
+                $("#subjectname").val('');
+                $("#classname").val('');
+                GetUpdatedTable();
+            })
+    </script>
+}

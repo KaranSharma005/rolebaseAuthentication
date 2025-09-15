@@ -1,0 +1,29 @@
+﻿
+@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+<form id="filter-form">
+    <div class="row mb-3">
+        <div class="col mb-3 d-flex gap-2">
+            <input type="text" placeholder="Search email here..." class="form-control" name="emailfilter" />
+            <input type="text" placeholder="Search name here..." class="form-control" name="namefilter"/>
+            
+            @Html.DropDownList(
+            "subjectname",
+            (List<SelectListItem>)ViewBag.Subjects,
+            "Select subject",
+            new { @class = "form-control", required = "required"}
+            )
+
+            @Html.DropDownList(
+            "classname",
+            (List<SelectListItem>)ViewBag.Classes,
+            "Select class",
+            new { @class = "form-control", required = "required"}
+            )
+            <button type="submit" class="btn btn-primary" id="emailbtn">Search</button>
+            <button class="btn btn-danger" id="resetFilter">Reset</button>
+        </div>
+    </div>
+</form>

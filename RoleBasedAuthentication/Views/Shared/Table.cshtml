@@ -1,0 +1,28 @@
+﻿@model List<MyModal>
+@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+<table class="table">
+    <tr>
+        <th>
+            Name
+        </th>
+        <th>Roll no</th>
+        <th>Adress</th>
+        <th>State</th>
+        <th>Action</th>
+    </tr>
+    @foreach(var data in Model)
+    {
+        <tr>
+            <td>@data.name</td>
+            <td>@data.roll</td>
+            <td>@data.adress</td>
+            <td>@data.state</td>
+            <td>
+                <button class="alert-danger dletebtn" onclick="deleteRecord(@data.roll)">Delete</button>
+                <button onclick="updateRecord(@data.roll)">Update</button>
+            </td>
+        </tr>
+    }
+</table>

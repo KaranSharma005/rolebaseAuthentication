@@ -1,0 +1,111 @@
+﻿
+@{
+    ViewData["Title"] = "Home Page";
+}
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+    <button class="addform btn-primary">Open Modal</button>
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Add details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body row" id="modalDiv">
+
+                </div>
+            </div>  
+        </div>
+    </div>
+    <div id="tablebody">
+
+    </div>
+
+    <div id="updateformbody"></div>
+</div>
+
+
+@section Scripts{
+
+    <script>
+        
+        $(document).ready(function(){
+            UpdateTableData()
+            $(".addform").click(function(){
+            $.get("/Home/AddUser", function(body){
+                $("#modalDiv").html(body);
+                $("#myModal").modal("show");
+            })
+        })
+
+        $(".close").click(function(){
+            $("#myModal").modal("hide");
+        })
+        });
+
+        function UpdateTableData(){
+            $.get("/Home/Table", function(body){
+                $("#tablebody").html(body);
+            })
+        }
+
+        function updateRecord(roll){
+            var id = parseInt(roll,10);
+            $.get("/Home/UpdateForm", { id: id }, function(body){
+                $("#modalDiv").html(body);
+                $("#myModal").modal("show");
+            })
+        }
+
+        function deleteRecord(roll){
+            var id = parseInt(roll,10);
+            $.get("/Home/RemoveOne", { id: id }, function(body){
+                    $("#tablebody").html(body);
+            })
+        }
+
+        $(document).off("click", "#submit-data").on("click", ".submit-data", function(e){
+            e.preventDefault();
+            var formData = $("#student-form").serialize();
+            $.ajax({
+                type : "POST",
+                url : "/Home/AddUser",
+                data : formData,
+                dataType: "json",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                    success: function(response) {
+                    $("#myModal").modal("hide");
+                    UpdateTableData();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error("Error submitting data:", textStatus, errorThrown);
+                }
+            })
+        })
+
+        $(document).off("click", "#updateForm").on("click", "#updateForm", function(e){
+            e.preventDefault();
+            var formData = $("#update-form").serialize();
+            $.ajax({
+                    type : "POST",
+                    url : "/Home/UpdateChanges",
+                    data : formData,
+                    dataType: "html",
+                    contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                    success: function(response) {
+                        $("#myModal").modal("hide");
+                        $("#tablebody").html(response);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("Error submitting data:", textStatus, errorThrown);
+                    }
+            })
+        })
+    </script>
+}

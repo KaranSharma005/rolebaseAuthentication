@@ -10,6 +10,7 @@ namespace RoleBasedAuthentication.Controllers
     public class TeacherController : Controller
     {
 
+
         private readonly UsersHelper _users;
         private readonly ClassHelper _classHelper;
         public TeacherController(

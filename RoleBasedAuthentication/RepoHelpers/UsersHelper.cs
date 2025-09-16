@@ -35,35 +35,77 @@ namespace RoleBasedAuthentication.RepoHelpers
 
         public List<TeacherDetailModel> GetTeachers(TeacherFilterModal modal)
         {
-            //return GetUsersInPages(modal);
             using (var connection = new SqlConnection(_connectionString))
             {
                 var users = connection.Query<TeacherDetailModel>(
                     @"SELECT 
-    a.Id, 
-    a.UserName, 
-    a.Name, 
-    a.status, 
-    f.SubjectId, 
-    e.className
-FROM AspNetUsers a
-INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
-INNER JOIN AspNetRoles c ON b.RoleId = c.Id
-LEFT JOIN subjects f ON f.Id = a.Id
-LEFT JOIN teacherClassMap d ON d.userId = a.Id
-LEFT JOIN classnameMap e ON e.classId = d.classId
-WHERE 
-    b.RoleId = 2
-      and (
-                        (a.UserName like '%' + @email + '%' or @email is null)
-                        and (a.Name like '%' + @name + '%' or @name is null)
-                        and (@classname is null or e.classId = @classname)
-                        and (@subjectname is null or f.SubjectId = @subjectname)
-                    )",
-                    new { email = modal.emailfilter, name = modal.namefilter, classname = modal.classname, subjectname = modal.subjectname }
+                a.Id, 
+                a.UserName, 
+                a.Name, 
+                a.status, 
+                f.SubjectId, 
+                e.className
+            FROM AspNetUsers a
+            INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
+            INNER JOIN AspNetRoles c ON b.RoleId = c.Id
+            LEFT JOIN subjects f ON f.Id = a.Id
+            LEFT JOIN teacherClassMap d ON d.userId = a.Id
+            LEFT JOIN classnameMap e ON e.classId = d.classId
+            WHERE 
+                b.RoleId = 2
+                  and (
+                                    (a.UserName like '%' + @email + '%' or @email is null)
+                                    and (a.Name like '%' + @name + '%' or @name is null)
+                                    and (@classname is null or e.classId = @classname)
+                                    and (@subjectname is null or f.SubjectId = @subjectname)
+                                )",
+                    new { email = modal.emailfilter, name = modal.namefilter, classname = modal.classname, subjectname = modal.subjectname , PageNumber = modal.pageNumber, PageSize = modal.pageSize}
                     ).ToList();
+
+                //int skipAmount = (modal.pageNumber) * modal.pageSize;
+                //var paginatedTeachers = users.Skip(skipAmount).Take(modal.pageSize).ToList();
+                //return paginatedTeachers;
+
                 return users;
             }
+
+        }
+
+        public List<TeacherDetailModel> GetPaginatedTeachers(TeacherFilterModal modal)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                var users = connection.Query<TeacherDetailModel>(
+                    @"SELECT 
+                a.Id, 
+                a.UserName, 
+                a.Name, 
+                a.status, 
+                f.SubjectId, 
+                e.className
+            FROM AspNetUsers a
+            INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
+            INNER JOIN AspNetRoles c ON b.RoleId = c.Id
+            LEFT JOIN subjects f ON f.Id = a.Id
+            LEFT JOIN teacherClassMap d ON d.userId = a.Id
+            LEFT JOIN classnameMap e ON e.classId = d.classId
+            WHERE 
+                b.RoleId = 2
+                  and (
+                                    (a.UserName like '%' + @email + '%' or @email is null)
+                                    and (a.Name like '%' + @name + '%' or @name is null)
+                                    and (@classname is null or e.classId = @classname)
+                                    and (@subjectname is null or f.SubjectId = @subjectname)
+                                )
+            ORDER BY a.id
+            OFFSET (@PageNumber) * @PageSize ROWS
+            FETCH NEXT @PageSize ROWS ONLY",
+                    new { email = modal.emailfilter, name = modal.namefilter, classname = modal.classname, subjectname = modal.subjectname, PageNumber = modal.pageNumber, PageSize = modal.pageSize }
+                    ).ToList();
+
+                return users;
+            }
+
         }
 
         public async Task<List<string>> GetStudents()
@@ -251,38 +293,5 @@ WHERE
                 Console.WriteLine(ex.Message);
             }
         }
-
-        //public List<TeacherDetailModel> GetUsersInPages(TeacherFilterModal modal)
-        //{
-        //    try
-        //    {
-        //        using (var connection = new SqlConnection(_connectionString))
-        //        {
-        //            string sql = @"SELECT a.Id, a.UserName, a.Name, a.status, f.SubjectId, e.className
-        //                            FROM AspNetUsers a 
-        //                            INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
-        //                            INNER JOIN AspNetRoles c ON b.RoleId = c.Id
-        //                            LEFT JOIN subjects f ON f.Id = a.Id
-        //                            LEFT JOIN teacherClassMap d ON d.userId = a.Id
-        //                            LEFT JOIN classnameMap e ON e.classId = d.classId
-        //                            WHERE  b.RoleId = 2 and (
-        //                            (a.UserName like '%' + @email + '%' or @email is null)
-        //                            and (a.Name like '%' + @name + '%' or @name is null)
-        //                            and (@classname is null or e.classId = @classname)
-        //                            and (@subjectname is null or f.SubjectId = @subjectname)
-        //                            )
-        //                            ORDER BY a.Id
-        //                            OFFSET (@PageNumber - 1) * @PageSize ROWS
-        //                            FETCH NEXT @PageSize ROWS ONLY";
-
-        //            return connection.Query<TeacherDetailModel>(sql, new { email = modal.emailfilter, name = modal.namefilter, classname = modal.classname, subjectname = modal.subjectname, PageNumber = modal.pageNumber, PageSize = modal.pageSize }).ToList() ;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex.Message);
-        //        return null;
-        //    }
-        //}
     }
 }

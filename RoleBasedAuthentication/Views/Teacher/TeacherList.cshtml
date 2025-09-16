@@ -1,0 +1,100 @@
+﻿@using RoleBasedAuthentication.Models.Enums;
+@using RoleBasedAuthentication.Services;
+<div class="modal fade" id="teacherModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Update Teacher</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body row" id="modalDiv">
+            </div>
+        </div>
+    </div>
+</div>
+<button type="button" id="addTeacherBtn" class="position-absolute top-10 end-0 btn btn-secondary btn-lg">Add Teacher</button>
+
+<div id="filter-div">
+    <div class="row mb-3">
+        <div class="col mb-3 d-flex gap-2">
+            <input type="text" placeholder="Search email here..." class="form-control" id="emailfilter" />
+            <input type="text" placeholder="Search name here..." class="form-control" id="namefilter" />
+
+            @Html.DropDownList(
+            "subjectname",
+                        (List<SelectListItem>)ViewBag.Subjects,
+                        "Select subject",
+                        new { @class = "form-control", required = "required" }
+                        )
+
+            @Html.DropDownList(
+                        "classname",
+                        (List<SelectListItem>)ViewBag.Classes,
+                        "Select class",
+                        new { @class = "form-control", required = "required" }
+                        )
+            <button type="submit" class="btn btn-primary" id="emailbtn">Search</button>
+            <button class="btn btn-danger" id="resetFilter">Reset</button>
+        </div>
+    </div>
+</div>
+<div id="teachers-list">
+</div>
+
+@section Scripts {
+    <script>
+    $(document).ready(function(){
+        function loadPagination(pageNumber, pageSize) {
+            $("#paginate").bs_pagination({
+                currentPage: pageNumber + 1,
+                rowsPerPage: parseInt(pageSize),
+                maxRowsPerPage: pageSize,
+                totalRows: $('#resultCount').val(),
+                totalPages: Math.ceil($('#resultCount').val() / parseInt(pageSize)),
+                showGoToPage: false,
+                showRowsPerPage: false,
+                containerClass: "mx-4",
+                navInfoContainerClass: "mx-2 pt-sm-0 pt-2 text-nowrap",
+                visiblePageLinks: 3,
+                onChangePage: function (event, data) {
+                    pageNumber = data.currentPage - 1;
+                    loadAddressList({ pageNumber: pageNumber, pageSize: 10 });
+                }
+            });
+
+        }
+
+        function loadAddressList(paginationObj) {
+            var pagesize = $("#pageSize").val();
+            var email = $("#emailfilter").val();
+            var name = $("#namefilter").val();
+            var subjectname = $("#subjectname").val();
+            var classname = $("#classname").val();
+            pagesize = pagesize == null ? 10 : pagesize;
+            $.ajax({
+                url: '/Teacher/TeacherListPartial',
+                method: 'POST',
+                    data: {
+                        emailfilter : email,
+                        namefilter : name,
+                        subjectname : subjectname,
+                        classname : classname,
+                        pageNumber: paginationObj.pageNumber, 
+                        pageSize: pagesize
+                    }
+            }).done(function (data) {
+                $("#teachers-list").html(data);
+                setTimeout(function () {
+                    cur_pagenumber = paginationObj.pageNumber;
+                    console.log("page_number=" + cur_pagenumber);
+                    loadPagination(paginationObj.pageNumber, pagesize);
+                }, 0);
+            });
+        }
+
+        loadAddressList({pageNumber : 0, pageSize :10 });
+    })
+    </script>
+}

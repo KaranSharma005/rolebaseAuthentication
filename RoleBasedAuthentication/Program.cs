@@ -15,12 +15,6 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
     options.SignIn.RequireConfirmedAccount = true;
-    //Activate the options when you are required to set custom strong password
-    //options.Password.RequireDigit = true;
-    //options.Password.RequiredLength = 10;
-    //options.Password.RequireUppercase = true;
-    //options.Password.RequireLowercase = true;
-    //options.Password.RequireNonAlphanumeric = true;
     })
     .AddRoles<IdentityRole>()           //for adding role useful for securing route from being accessses by another user
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -34,6 +28,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddTransient<UsersHelper>();
 builder.Services.AddTransient<ClassHelper>();
 builder.Services.AddTransient<SpaHelper>();
+//builder.Services.AddScoped<Adminhelper>();
 
 var app = builder.Build();
 

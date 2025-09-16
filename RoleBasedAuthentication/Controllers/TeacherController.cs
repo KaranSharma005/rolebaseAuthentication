@@ -39,8 +39,6 @@ namespace RoleBasedAuthentication.Controllers
                 namefilter = string.IsNullOrWhiteSpace(modal.namefilter) ? null : modal.namefilter,
                 classname = modal.classname == 0 ? null : modal.classname,
                 subjectname = modal.subjectname == 0 ? null : modal.subjectname,
-                //pageSize = modal.pageSize,
-                //pageNumber = modal.pageNumber,
             }));
         }
 
@@ -82,5 +80,32 @@ namespace RoleBasedAuthentication.Controllers
         }
 
         #endregion
+
+        #region CRUD OPs
+
+        [HttpGet]
+        public IActionResult TeacherList()
+        {
+            ViewBag.Subjects = _users.GetAllSubjects(0);
+            ViewBag.Classes = _classHelper.GetAllClasses();
+            return View();
+        }
+        [HttpPost]
+        public IActionResult TeacherListPartial(TeacherFilterModal modal)
+        {
+            return PartialView(_users.GetPaginatedTeachers(new TeacherFilterModal
+            {
+                emailfilter = string.IsNullOrWhiteSpace(modal.emailfilter) ? null : modal.emailfilter,
+                namefilter = string.IsNullOrWhiteSpace(modal.namefilter) ? null : modal.namefilter,
+                classname = modal.classname == 0 ? null : modal.classname,
+                subjectname = modal.subjectname == 0 ? null : modal.subjectname,
+                pageNumber = modal.pageNumber == 0 ? 1 : modal.pageNumber,
+                pageSize = modal.pageSize == 0 ? 10 : modal.pageSize,
+            }));
+        }
+
+        #endregion
+
+
     }
 }

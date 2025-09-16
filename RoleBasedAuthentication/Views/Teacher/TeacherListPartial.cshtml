@@ -1,0 +1,100 @@
+﻿@using RoleBasedAuthentication.Models.Enums;
+@using RoleBasedAuthentication.Services;
+@model List<TeacherDetailModel>
+<style>
+    table {
+        border-collapse: separate !important;
+        border-spacing: 0 5px !important;
+    }
+
+    th,
+    td {
+        padding: 5px;
+        vertical-align: top !important;
+    }
+
+</style>
+
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="">
+            <div class="card-header row p-2 mx-0 bg-facebook-gradient rounded-3 text-light">
+                <div class="col-sm-8 d-flex flex-sm-row flex-column align-items-center justify-content-sm-between">
+                    <h3 class="card-title"><span class="fs-4">Title</span> Results</h3>
+                    <div id="paginate"></div>
+                </div>
+                <div class="col-sm d-flex flex-row align-items-center justify-content-sm-end justify-content-center">
+                    <div class="">
+                        <select id="pageSize" name="pagesize" class="form-control">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped Smart-table" id="dTable">
+                        <thead class="bg-primary-transparent" style="border-top: 1px solid #efefef;">
+                            <tr>
+                                <th class="py-2 fw-bold  rounded-start">Name</th>
+                                <th class="py-2 fw-bold ">Email</th>
+                                <th class="py-2 fw-bold ">Subject</th>
+                                <th class="py-2 fw-bold ">Class</th>
+                                <th class="py-2 fw-bold ">Action</th>
+                                <th class="py-2 fw-bold  rounded-end">Status</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var teacher in @Model)
+                            {
+                                <tr class="bg-light shadow-sm">
+                                    <td class="py-2 rounded-start">
+                                        @teacher.Name
+                                    </td>
+                                    <td class="py-2">
+                                        @teacher.UserName
+                                    </td>
+                                    <td class="py-2">
+                                        @(teacher.SubjectId != null ? ((Subjects)teacher.SubjectId).GetEnumDisplayName() : "-")
+                                    </td>
+                                    <td class="py-2">
+                                        @(teacher.className ?? "-")
+                                    </td>
+                                    <td class="py-2">
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-primary btn-sm editButton" data-user="@teacher?.Id"
+                                                    @(teacher?.status == true ? "" : "disabled")>
+                                                Edit
+                                            </button>
+
+                                            @if (teacher?.status == true)
+                                            {
+                                                <button type="button" class="btn btn-danger btn-sm disableBtn" data-user="@teacher?.Id">
+                                                    Disable User
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary loginasBtn" data-user="@teacher?.Id">Login As</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-danger btn-sm enableBtn" data-user="@teacher?.Id">
+                                                    Enable User
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="py-2">
+                                        @(teacher?.status == true ? "Active" : "Inactive")
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

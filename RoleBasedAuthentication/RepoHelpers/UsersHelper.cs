@@ -9,6 +9,7 @@ using RoleBasedAuthentication.Models;
 using RoleBasedAuthentication.Models.Enums;
 using RoleBasedAuthentication.Services;
 using System.Buffers;
+using System.Data;
 using System.Drawing.Printing;
 
 namespace RoleBasedAuthentication.RepoHelpers
@@ -35,77 +36,81 @@ namespace RoleBasedAuthentication.RepoHelpers
 
         public List<TeacherDetailModel> GetTeachers(TeacherFilterModal modal)
         {
-            using (var connection = new SqlConnection(_connectionString))
+            TeacherFilterModal mdl = new TeacherFilterModal
             {
-                var users = connection.Query<TeacherDetailModel>(
-                    @"SELECT 
-                a.Id, 
-                a.UserName, 
-                a.Name, 
-                a.status, 
-                f.SubjectId, 
-                e.className
-            FROM AspNetUsers a
-            INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
-            INNER JOIN AspNetRoles c ON b.RoleId = c.Id
-            LEFT JOIN subjects f ON f.Id = a.Id
-            LEFT JOIN teacherClassMap d ON d.userId = a.Id
-            LEFT JOIN classnameMap e ON e.classId = d.classId
-            WHERE 
-                b.RoleId = 2
-                  and (
+                emailfilter = string.IsNullOrWhiteSpace(modal.emailfilter) ? null : modal.emailfilter,
+                namefilter = string.IsNullOrWhiteSpace(modal.namefilter) ? null : modal.namefilter,
+                classname = modal.classname == 0 ? null : modal.classname,
+                subjectname = modal.subjectname == 0 ? null : modal.subjectname,
+            };
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    var users = connection.Query<TeacherDetailModel>(
+                        @"SELECT a.Id, a.UserName, a.Name, a.status, f.SubjectId, e.className
+                        FROM AspNetUsers a
+                        INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
+                        INNER JOIN AspNetRoles c ON b.RoleId = c.Id
+                        LEFT JOIN subjects f ON f.Id = a.Id
+                        LEFT JOIN teacherClassMap d ON d.userId = a.Id
+                        LEFT JOIN classnameMap e ON e.classId = d.classId
+                        WHERE b.RoleId = 2
+                        and (
                                     (a.UserName like '%' + @email + '%' or @email is null)
                                     and (a.Name like '%' + @name + '%' or @name is null)
                                     and (@classname is null or e.classId = @classname)
                                     and (@subjectname is null or f.SubjectId = @subjectname)
-                                )",
-                    new { email = modal.emailfilter, name = modal.namefilter, classname = modal.classname, subjectname = modal.subjectname , PageNumber = modal.pageNumber, PageSize = modal.pageSize}
-                    ).ToList();
+                        )",
+                    new { email = mdl.emailfilter, name = mdl.namefilter, classname = mdl.classname, subjectname = mdl.subjectname }
+                     ).ToList();
 
-                //int skipAmount = (modal.pageNumber) * modal.pageSize;
-                //var paginatedTeachers = users.Skip(skipAmount).Take(modal.pageSize).ToList();
-                //return paginatedTeachers;
-
-                return users;
+                    return users;
+                }
             }
-
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
         }
 
-        public List<TeacherDetailModel> GetPaginatedTeachers(TeacherFilterModal modal)
+        public TeacherDetailModelVM GetPaginatedTeachersSP(TeacherFilterModal modal)
         {
+            TeacherFilterModal mdl = new TeacherFilterModal
+            {
+                emailfilter = string.IsNullOrWhiteSpace(modal.emailfilter) ? null : modal.emailfilter,
+                namefilter = string.IsNullOrWhiteSpace(modal.namefilter) ? null : modal.namefilter,
+                classname = modal.classname == 0 ? null : modal.classname,
+                subjectname = modal.subjectname == 0 ? null : modal.subjectname,
+                pageNumber = modal.pageNumber,
+                pageSize = modal.pageSize == 0 ? 10 : modal.pageSize,
+            };
+
+
+            TeacherDetailModelVM obj=new TeacherDetailModelVM();
+
             using (var connection = new SqlConnection(_connectionString))
             {
-                var users = connection.Query<TeacherDetailModel>(
-                    @"SELECT 
-                a.Id, 
-                a.UserName, 
-                a.Name, 
-                a.status, 
-                f.SubjectId, 
-                e.className
-            FROM AspNetUsers a
-            INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
-            INNER JOIN AspNetRoles c ON b.RoleId = c.Id
-            LEFT JOIN subjects f ON f.Id = a.Id
-            LEFT JOIN teacherClassMap d ON d.userId = a.Id
-            LEFT JOIN classnameMap e ON e.classId = d.classId
-            WHERE 
-                b.RoleId = 2
-                  and (
-                                    (a.UserName like '%' + @email + '%' or @email is null)
-                                    and (a.Name like '%' + @name + '%' or @name is null)
-                                    and (@classname is null or e.classId = @classname)
-                                    and (@subjectname is null or f.SubjectId = @subjectname)
-                                )
-            ORDER BY a.id
-            OFFSET (@PageNumber) * @PageSize ROWS
-            FETCH NEXT @PageSize ROWS ONLY",
-                    new { email = modal.emailfilter, name = modal.namefilter, classname = modal.classname, subjectname = modal.subjectname, PageNumber = modal.pageNumber, PageSize = modal.pageSize }
-                    ).ToList();
+                var parameters = new DynamicParameters();
+                parameters.Add("@email", mdl.emailfilter);
+                parameters.Add("@name", mdl.namefilter);
+                parameters.Add("@classname", mdl.classname);
+                parameters.Add("@subjectname", mdl.subjectname);
+                parameters.Add("@PageNumber", mdl.pageNumber);
+                parameters.Add("@PageSize", mdl.pageSize);
+                parameters.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-                return users;
+                obj.teacher_list = connection.Query<TeacherDetailModel>(
+                    "GetTeacherList",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                ).ToList();
+
+                obj.count= parameters.Get<int>("@TotalCount");
+                return obj;
+                
             }
-
         }
 
         public async Task<List<string>> GetStudents()
@@ -277,7 +282,6 @@ namespace RoleBasedAuthentication.RepoHelpers
                 return null;
             }
         }
-
 
         public void assignClassToTeacher(string id, int classId)
         {

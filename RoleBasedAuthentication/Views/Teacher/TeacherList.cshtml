@@ -43,6 +43,7 @@
 <div id="teachers-list">
 </div>
 
+
 @section Scripts {
     <script>
     $(document).ready(function(){
@@ -57,13 +58,14 @@
                 showRowsPerPage: false,
                 containerClass: "mx-4",
                 navInfoContainerClass: "mx-2 pt-sm-0 pt-2 text-nowrap",
-                visiblePageLinks: 3,
+                visiblePageLinks: Math.ceil($('#resultCount').val()/pageSize),
                 onChangePage: function (event, data) {
                     pageNumber = data.currentPage - 1;
-                    loadAddressList({ pageNumber: pageNumber, pageSize: 10 });
+                    loadAddressList({ pageNumber: pageNumber, pageSize: 10 });      
                 }
             });
-
+            var result =  $('#resultCount').val();
+             console.log(result,"result");
         }
 
         function loadAddressList(paginationObj) {
@@ -93,6 +95,11 @@
                 }, 0);
             });
         }
+
+        $("body").on("change", "#pageSize", function(){
+            var size = $("#pageSize").val();
+            loadAddressList({pageNumber : 0, pageSize : size});
+        })
 
         loadAddressList({pageNumber : 0, pageSize :10 });
     })

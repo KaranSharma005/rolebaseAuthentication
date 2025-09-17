@@ -33,13 +33,7 @@ namespace RoleBasedAuthentication.Controllers
         [HttpGet]
         public IActionResult List(TeacherFilterModal modal)
         {
-            return PartialView(_users.GetTeachers(new TeacherFilterModal
-            {
-                emailfilter = string.IsNullOrWhiteSpace(modal.emailfilter) ? null : modal.emailfilter,
-                namefilter = string.IsNullOrWhiteSpace(modal.namefilter) ? null : modal.namefilter,
-                classname = modal.classname == 0 ? null : modal.classname,
-                subjectname = modal.subjectname == 0 ? null : modal.subjectname,
-            }));
+            return PartialView(_users.GetTeachers(modal));
         }
 
         [HttpGet]
@@ -81,8 +75,7 @@ namespace RoleBasedAuthentication.Controllers
 
         #endregion
 
-        #region CRUD OPs
-
+        #region Pagination Operations
         [HttpGet]
         public IActionResult TeacherList()
         {
@@ -93,19 +86,11 @@ namespace RoleBasedAuthentication.Controllers
         [HttpPost]
         public IActionResult TeacherListPartial(TeacherFilterModal modal)
         {
-            return PartialView(_users.GetPaginatedTeachers(new TeacherFilterModal
-            {
-                emailfilter = string.IsNullOrWhiteSpace(modal.emailfilter) ? null : modal.emailfilter,
-                namefilter = string.IsNullOrWhiteSpace(modal.namefilter) ? null : modal.namefilter,
-                classname = modal.classname == 0 ? null : modal.classname,
-                subjectname = modal.subjectname == 0 ? null : modal.subjectname,
-                pageNumber = modal.pageNumber == 0 ? 1 : modal.pageNumber,
-                pageSize = modal.pageSize == 0 ? 10 : modal.pageSize,
-            }));
+            ViewBag.PageSize = modal.pageSize;
+            return PartialView(_users.GetPaginatedTeachersSP(modal));
         }
 
         #endregion
-
 
     }
 }

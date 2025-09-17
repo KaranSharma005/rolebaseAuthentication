@@ -10,6 +10,12 @@
         public string className { get; set; }
     }
 
+    public class TeacherDetailModelVM
+    {
+        public List<TeacherDetailModel> teacher_list { get; set; }
+        public int count { get; set; }
+    }
+
     public class TeacherSubjectModal
     {
         public int SubjectId { get; set; }

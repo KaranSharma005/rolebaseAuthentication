@@ -1,10 +1,12 @@
-﻿using AspNetCoreHero.ToastNotification;
+using AspNetCoreHero.ToastNotification;
 using AspNetCoreHero.ToastNotification.Extensions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using RoleBasedAuthentication.Data;
 using RoleBasedAuthentication.Models;
 using RoleBasedAuthentication.RepoHelpers;
+using RoleBasedAuthentication.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -24,15 +26,15 @@ builder.Services.AddNotyf(config => {
     config.IsDismissable = true;
     config.Position = NotyfPosition.TopRight;
 });
+builder.Services.Configure<EmailSettingsModal>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddControllersWithViews();
 builder.Services.AddTransient<UsersHelper>();
 builder.Services.AddTransient<ClassHelper>();
 builder.Services.AddTransient<SpaHelper>();
-//builder.Services.AddScoped<Adminhelper>();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -40,7 +42,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseHttpsRedirection();

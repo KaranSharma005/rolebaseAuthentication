@@ -1,6 +1,7 @@
 ﻿@using RoleBasedAuthentication.Models.Enums;
 @using RoleBasedAuthentication.Services;
-@model List<TeacherDetailModel>
+@model TeacherDetailModelVM
+@Html.Hidden("resultCount", @Model.count)
 <style>
     table {
         border-collapse: separate !important;
@@ -13,26 +14,38 @@
         vertical-align: top !important;
     }
 
-</style>
+    .paginate-list ul .active {
+        border: 1px solid #fff;
+        border-radius: 3px;
+    }
 
+    #rows_info_paginate {
+        display: inline-block !important;
+        /* white-space: normal !important; */
+    }
+</style>
+@if(Model != null)
+{
 <div class="row row-sm">
     <div class="col-lg-12">
         <div class="">
             <div class="card-header row p-2 mx-0 bg-facebook-gradient rounded-3 text-light">
                 <div class="col-sm-8 d-flex flex-sm-row flex-column align-items-center justify-content-sm-between">
-                    <h3 class="card-title"><span class="fs-4">Title</span> Results</h3>
+                    <h3 class="card-title"><span class="fs-4">Title</span>Results</h3>
                     <div id="paginate"></div>
                 </div>
                 <div class="col-sm d-flex flex-row align-items-center justify-content-sm-end justify-content-center">
                     <div class="">
                         <select id="pageSize" name="pagesize" class="form-control">
-                            <option value="10">10</option>
+                            <option value="10">10</option> 
                             <option value="20">20</option>
                             <option value="50">50</option>
                         </select>
                     </div>
                 </div>
             </div>
+            <p>Total records : @Model.count</p>
+
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-striped Smart-table" id="dTable">
@@ -48,7 +61,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var teacher in @Model)
+                                @foreach (var teacher in @Model.teacher_list)
                             {
                                 <tr class="bg-light shadow-sm">
                                     <td class="py-2 rounded-start">
@@ -98,3 +111,10 @@
         </div>
     </div>
 </div>
+}
+
+<script>
+    $(document).ready(function () {
+        $("#pageSize").val('@ViewBag.PageSize');
+    })
+</script>

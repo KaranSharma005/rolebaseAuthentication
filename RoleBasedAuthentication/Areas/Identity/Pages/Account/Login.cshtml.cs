@@ -9,11 +9,14 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using RoleBasedAuthentication.Interfaces;
 using RoleBasedAuthentication.Models;
+using RoleBasedAuthentication.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
 namespace RoleBasedAuthentication.Areas.Identity.Pages.Account
@@ -23,12 +26,14 @@ namespace RoleBasedAuthentication.Areas.Identity.Pages.Account
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IEmailWithAttachment _emailSender;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger, UserManager<ApplicationUser> userManager)
+        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger, UserManager<ApplicationUser> userManager, IEmailWithAttachment emailSender)
         {
             _signInManager = signInManager;
             _logger = logger;
             _userManager = userManager;
+            _emailSender = emailSender;
         }
 
         /// <summary>
@@ -128,6 +133,16 @@ namespace RoleBasedAuthentication.Areas.Identity.Pages.Account
                 }
                 if (result.RequiresTwoFactor)
                 {
+                    //
+                    var token = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
+                    if(token != null)
+                    {
+                        await _emailSender.SendEmailAsync(
+                            Input.Email,
+                            "Verification code",
+                            $"Login to your account using the code {token}");
+                    }
+                    //
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
                 }
                 if (result.IsLockedOut)

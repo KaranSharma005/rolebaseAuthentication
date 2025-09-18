@@ -1,16 +1,24 @@
 ﻿using AspNetCoreHero.ToastNotification.Abstractions;
+using CsvHelper;
 using Dapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.Data.SqlClient;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using NuGet.Common;
 using RoleBasedAuthentication.Data;
+using RoleBasedAuthentication.Interfaces;
 using RoleBasedAuthentication.Models;
 using RoleBasedAuthentication.Models.Enums;
 using RoleBasedAuthentication.Services;
-using System.Buffers;
 using System.Data;
-using System.Drawing.Printing;
+using System.Globalization;
+using System.Net.Mail;
+using System.Text;
+using System.Text.Json;
 
 namespace RoleBasedAuthentication.RepoHelpers
 {
@@ -20,18 +28,22 @@ namespace RoleBasedAuthentication.RepoHelpers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly string _connectionString;
         private readonly INotyfService _notyf;
+        private readonly IEmailWithAttachment _emailSender;
 
         public UsersHelper(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             IConfiguration config,
-            INotyfService notyf
+            INotyfService notyf,
+            IEmailWithAttachment emailSender
+
         )
         {
             _context = context;
             _userManager = userManager;
             _connectionString = config.GetConnectionString("DefaultConnection");
             _notyf = notyf;
+            _emailSender = emailSender;
         }
 
         public List<TeacherDetailModel> GetTeachers(TeacherFilterModal modal)
@@ -87,7 +99,6 @@ namespace RoleBasedAuthentication.RepoHelpers
                 pageSize = modal.pageSize == 0 ? 10 : modal.pageSize,
             };
 
-
             TeacherDetailModelVM obj=new TeacherDetailModelVM();
 
             using (var connection = new SqlConnection(_connectionString))
@@ -110,6 +121,56 @@ namespace RoleBasedAuthentication.RepoHelpers
                 obj.count= parameters.Get<int>("@TotalCount");
                 return obj;
                 
+            }
+        }
+
+        public async Task SendDataToEmail(List<TeacherDetailModel> list, string emailTo)
+        {
+            try
+            {
+                StringBuilder bodyBuilder = new StringBuilder();
+
+                StringBuilder csv = new StringBuilder();
+                csv.AppendLine("Name,UserName,SubjectId,Status,ClassName");
+
+                foreach (var item in list)
+                {
+                    csv.AppendLine($"{item.Name},{item.UserName}, {item.SubjectId}, {item.status}, {item.className},");
+                }
+
+                byte[] byteArray = Encoding.UTF8.GetBytes(csv.ToString());
+
+                var attachments = new List<Attachment>
+                {
+                    new Attachment(new MemoryStream(byteArray), "data.csv", "text/csv")
+                };
+
+                await _emailSender.SendEmailAsync(
+                            emailTo,
+                            "Teachers list",
+                            bodyBuilder.ToString(),
+                            attachments
+                );
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public void SendToEmail(TeacherFilterModal modal)
+        {
+            try
+            {
+                TeacherDetailModelVM obj = GetPaginatedTeachersSP(modal);
+                modal.pageSize = obj.count;
+                obj = GetPaginatedTeachersSP(modal);
+
+                SendDataToEmail(obj.teacher_list, modal.emailToForwardData);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -188,25 +249,25 @@ namespace RoleBasedAuthentication.RepoHelpers
             }
         }
 
-        public List<SelectListItem> GetCourses()
-        {
-            try
-            {
-                return Enum.GetValues(typeof(Courses))
-                    .Cast<Courses>()
-                    .Select(e => new SelectListItem
-                    {
-                        Value = e.ToString(),
-                        Text = e.GetEnumDisplayName()
-                    })
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
-        }
+        //public List<SelectListItem> GetCourses()
+        //{
+        //    try
+        //    {
+        //        return Enum.GetValues(typeof(Courses))
+        //            .Cast<Courses>()
+        //            .Select(e => new SelectListItem
+        //            {
+        //                Value = e.ToString(),
+        //                Text = e.GetEnumDisplayName()
+        //            })
+        //            .ToList();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex.Message);
+        //        return null;
+        //    }
+        //}
 
         public List<int> PerformOperationsOnDb(SqlConnection connection, TeacherSubjectModal modal)
         {
@@ -235,9 +296,7 @@ namespace RoleBasedAuthentication.RepoHelpers
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     connection.Open();
-
                     var assignedSubjects = PerformOperationsOnDb(connection, modal);
-
                     if (assignedSubjects.Contains(modal.SubjectId) || !IsValidSubject(modal.SubjectId))
                     {
                         _notyf.Success("Details changed successfully");
@@ -283,18 +342,92 @@ namespace RoleBasedAuthentication.RepoHelpers
             }
         }
 
-        public void assignClassToTeacher(string id, int classId)
+        //public void assignClassToTeacher(string id, int classId)
+        //{
+        //    try
+        //    {
+        //        using (var connection = new SqlConnection(_connectionString))
+        //        {
+        //            connection.Execute("insert into teacherclassmap(userid, classid) values(@userid, @classid)", new { userid = id, classid = classId });
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex.Message);
+        //    }
+        //}
+
+        public TeacherDetailModel   GetSingleTeacherDetails(string id)
         {
             try
             {
                 using (var connection = new SqlConnection(_connectionString))
                 {
-                    connection.Execute("insert into teacherclassmap(userid, classid) values(@userid, @classid)", new { userid = id, classid = classId });
+                    return connection.QuerySingleOrDefault<TeacherDetailModel>(@"SELECT a.Id, a.UserName, a.Name, a.status, f.SubjectId, e.className
+                        FROM AspNetUsers a
+                        INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
+                        INNER JOIN AspNetRoles c ON b.RoleId = c.Id
+                        LEFT JOIN subjects f ON f.Id = a.Id
+                        LEFT JOIN teacherClassMap d ON d.userId = a.Id
+                        LEFT JOIN classnameMap e ON e.classId = d.classId
+                        WHERE a.Id = @id ", new { id });
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        public List<TeacherCSVModal> GetTeachersForCSV()
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    var users = connection.Query<TeacherCSVModal>(
+                        @"SELECT a.UserName, a.Name, a.status, f.SubjectId, e.className
+                        FROM AspNetUsers a
+                        INNER JOIN AspNetUserRoles b ON a.Id = b.UserId
+                        INNER JOIN AspNetRoles c ON b.RoleId = c.Id
+                        LEFT JOIN subjects f ON f.Id = a.Id
+                        LEFT JOIN teacherClassMap d ON d.userId = a.Id
+                        LEFT JOIN classnameMap e ON e.classId = d.classId
+                        WHERE b.RoleId = 2").ToList();
+
+                    return users;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        public MemoryStream DownloadDetails()
+        {
+            try
+            {
+                var result = GetTeachersForCSV();
+                var memoryStream = new MemoryStream();
+
+                using (var streamWriter = new StreamWriter(memoryStream, leaveOpen: true))
+                using (var csvWriter = new CsvHelper.CsvWriter(streamWriter, CultureInfo.InvariantCulture))
+                {
+                    csvWriter.WriteRecords(result);
+                    streamWriter.Flush();
+                }
+
+                memoryStream.Position = 0;
+
+                return memoryStream;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
             }
         }
     }

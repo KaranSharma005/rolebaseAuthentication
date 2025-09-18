@@ -33,6 +33,16 @@
         public int? subjectname { get; set; }
         public int? classname { get; set; }
         public int pageNumber { get; set; }
-        public int pageSize { get; set; }   
+        public int pageSize { get; set; }  
+        public string emailToForwardData { get; set; }
+    }
+
+    public class TeacherCSVModal
+    {
+        public string Name { get; set; }
+        public string UserName { get; set; }
+        public int? SubjectId { get; set; }
+        public bool status { get; set; }
+        public string className { get; set; }
     }
 }

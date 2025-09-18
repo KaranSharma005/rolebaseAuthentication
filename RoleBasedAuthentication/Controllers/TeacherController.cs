@@ -1,5 +1,6 @@
 ﻿using AspNetCoreHero.ToastNotification.Abstractions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using RoleBasedAuthentication.Models;
@@ -9,17 +10,19 @@ namespace RoleBasedAuthentication.Controllers
     [Authorize]
     public class TeacherController : Controller
     {
-
-
         private readonly UsersHelper _users;
         private readonly ClassHelper _classHelper;
+        private readonly UserManager<ApplicationUser> _userManager;
+
         public TeacherController(
             UsersHelper users,
-            ClassHelper classHelper
+            ClassHelper classHelper,
+            UserManager<ApplicationUser> userManager
         )
         {
             _users = users;
             _classHelper = classHelper;
+            _userManager = userManager;
         }
 
         #region Teacher
@@ -28,15 +31,22 @@ namespace RoleBasedAuthentication.Controllers
         {
             ViewBag.Subjects = _users.GetAllSubjects(0);
             ViewBag.Classes = _classHelper.GetAllClasses();
+            if (User.IsInRole("Teacher"))
+            {
+                var userId = _userManager.GetUserId(User);
+                ViewBag.PersonalInfo = _users.GetSingleTeacherDetails(userId);
+            }
             return View();
         }
         [HttpGet]
+        [Authorize(Roles = "Director")]
         public IActionResult List(TeacherFilterModal modal)
         {
             return PartialView(_users.GetTeachers(modal));
         }
 
         [HttpGet]
+        [Authorize(Roles = "Director")]
         public IActionResult UpdateDetailsPartial(string id)
         {
             TeacherSubjectModal obj = _users.GetSelectedSubject(id);
@@ -46,6 +56,7 @@ namespace RoleBasedAuthentication.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public IActionResult UpdateTeacher(TeacherSubjectModal modal)
         {
             _users.UpdateDetails(modal);
@@ -53,6 +64,7 @@ namespace RoleBasedAuthentication.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public IActionResult ToggleTeacher(string id, bool status)
         {
             _users.Toggleteacher(id, status);
@@ -71,6 +83,20 @@ namespace RoleBasedAuthentication.Controllers
             ViewBag.Subjects = _users.GetAllSubjects(0);
             ViewBag.Classes = _classHelper.GetAllClasses();
             return PartialView();
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Director")]
+        public IActionResult DownloadAsCSV()
+        {
+            return File(_users.DownloadDetails().ToArray(), "text/csv", "teacherslist.csv");
+        }
+
+        [HttpPost]
+        public IActionResult ShareDetails(TeacherFilterModal modal)
+        {
+            _users.SendToEmail(modal);
+            return Json("Data sent successfully");
         }
 
         #endregion
@@ -94,3 +120,4 @@ namespace RoleBasedAuthentication.Controllers
 
     }
 }
+    

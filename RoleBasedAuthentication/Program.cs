@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using RoleBasedAuthentication.Data;
+using RoleBasedAuthentication.Interfaces;
 using RoleBasedAuthentication.Models;
 using RoleBasedAuthentication.RepoHelpers;
 using RoleBasedAuthentication.Services;
@@ -31,7 +32,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddTransient<UsersHelper>();
 builder.Services.AddTransient<ClassHelper>();
 builder.Services.AddTransient<SpaHelper>();
-builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddTransient<IEmailWithAttachment, EmailSender>();
 
 var app = builder.Build();
 

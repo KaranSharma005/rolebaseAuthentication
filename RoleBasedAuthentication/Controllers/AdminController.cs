@@ -28,7 +28,8 @@ namespace RoleBasedAuthentication.Controllers
 
             await _signInManager.SignInAsync(user, isPersistent: false);
 
-            return RedirectToAction("Dashboard", "Teacher");
+            //return RedirectToAction("Dashboard", "Teacher");
+            return Json("Success");
         }
     }
 }
